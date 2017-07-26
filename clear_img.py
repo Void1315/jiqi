@@ -1,6 +1,7 @@
 from PIL import Image, ImageFilter
 import pytesseract
-
+import time
+import os
 
 class ReadImage(object):
 
@@ -157,82 +158,17 @@ class ReadImage(object):
 	    list_img = self.clear_img(img)
 	    img = self.list_set_img(list_img,img)
 	    return img
-	def split_img(self):
-		w,h = self.img.size
-		print(w,h)
-		list_x = []
-		list_y = []
-		list_1 = []
-		list_2 = []
-		list_ = []
-		setoff = 0
-		i = 0
-		for x in range(w):
-			list_lineY = []
-			for y in range(h):
-				if self.img.getpixel((x,y)) == 0:
-					list_lineY.append(y)
-					i = 0
-			if(i>3):
-				list_1.append(list_y)
-				list_y =[]
-				i = 0
-			if len(list_lineY)>0:
-				if min(list_lineY)==max(list_lineY):
-					list_y.append(min(list_lineY))
-
-				else:
-					list_y.append(min(list_lineY))
-					list_y.append(max(list_lineY)+1)
-			i = i+1
-		i = 0
-		for i in list_1:
-			if i:
-				# print("Ymax:",max(i))
-				# print("Ymin:",min(i))
-				tuple_= self.split_w(setoff,list_,min(i),max(i))
-				setoff = tuple_[0]
-				list_2.append(tuple_[1])
-				list_ = []
-		# for i in list_1:
-		# 	if i:
-		# 		print("Ymax:",max(i))
-		# 		print("Ymin:",min(i))
-		for i in list_2:
-			if i:
-				print("Xmax:",max(i))
-				print("Xmin:",min(i))
-
-	def split_w(self,setoff,list_2,s_h,e_h):
-		i = 0
-		list_x = []
-		tht_bool = False
-		w,h = self.img.size
-		for y in range(s_h,e_h):
-			list_lineX = []
-			for x in range(setoff,w):
-				# print(x)
-				if i>4:
-					tht_bool = False
-					i = 0
-					if(len(list_lineX)>0):
-						list_x.append(min(list_lineX))
-						list_x.append(max(list_lineX)+1)
-						list_lineX = []
-					break#该换行了
-				if self.img.getpixel((x,y)) == 0:
-					list_lineX.append(x)
-					i = 0
-					tht_bool = True
-				elif tht_bool:
-					i =i+1
-				print(list_lineX)
-			list_2.extend(list_x)
-		if len(list_2)>0:
-			return [max(list_2),list_2]
-
+	def save_splitImage(self,x1,y1,x2,y2):
+		print((x1,y1,x2,y2))
+		img = self.img.crop((x1,y1,x2,y2)).resize((20,20))
+		img.save("split_img/"+str(time.time())+".png",'PNG')
 
 if __name__ == '__main__':
-	img_ = Image.open('img/1500901237.339602.png')
-	the_img = ReadImage(img_)
-	the_img.split_img()
+	for root,dirs,files in os.walk("img/"):
+		for the_name in files:
+			img_ = Image.open("img/"+the_name)
+			the_imgObj = ReadImage(img_)
+			# the_imgObj.split_img()
+			img_ = the_imgObj.no_novce(img_)
+			print('成功')
+			img_.save("img/"+the_name,"PNG")
