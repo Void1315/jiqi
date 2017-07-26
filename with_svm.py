@@ -2,6 +2,8 @@ from PIL import Image, ImageFilter
 from svmutil import *
 from svm import *
 import os
+import shutil
+# import thread
 class SVMImage():
 	"""docstring for SVMImage
 		特征化图片+机器学习+机器识别
@@ -34,7 +36,7 @@ class SVMImage():
 	def getStrDate(self,label=0):
 		list_date = self.list_date
 		list_date = {index+1:i for index,i in enumerate(list_date)}
-		str_date = str(label)+" "+str(svm_date)[1:-1].replace(" ",'').replace(","," ")+"\n"
+		str_date = str(label)+" "+str(list_date)[1:-1].replace(" ",'').replace(","," ")+"\n"
 		return str_date
 	def getSvmDate(self):
 		list_date = self.list_date
@@ -45,6 +47,7 @@ class SVMImage():
 	def svmDateSave(self,str_date):
 		file_p = open(self.file_model,'a')
 		file_p.writelines(str_date)
+		print("写入成功")
 		file_p.close()
 
 	def getSvmCode(self):
@@ -54,54 +57,46 @@ class SVMImage():
 	def testDate(self):
 		test_date = [self.svmDate]
 		label = [5]
-		y,x = svm_read_problem(the_obj.file_model)
+		y,x = svm_read_problem(self.file_model)
 		param = svm_parameter('-t 1 -b 1 -q')
 		model = svm_problem(y, x)
 		model = svm_train(model,param)
-		print('test:')
-		# print((label))
 		p_label, p_acc, p_val = svm_predict(label,test_date,model)
-		print(p_label, p_acc)
+		if p_label[0]>9.0:
+			return chr(int(p_label[0]))
+		else:
+			return p_label[0]
+
+
 
 
 
 if __name__ == '__main__':
-	
-	img = Image.open("split_img/1500967740.6504016.png")
-	# img = Image.open("sucai/9/1500953797.8504016.png")
-	the_obj = SVMImage(img)
-	the_obj.testDate()
 
+	def move_put():#从分割素材到 模板临时文件夹
+		the_path = "split_img/"
+		move_path = "move_put/"
+		for root,dirs,files in os.walk(the_path):
+			for the_name in files:
+				img = Image.open(the_path+the_name)
+				the_obj = SVMImage(img)
+				code = the_obj.testDate()
+				code = str(code)[:1]
+				shutil.move(the_path+the_name,"move_put/"+code+"/")
+				print("移动成功"+code)
+	# move_put()
 
-	# sucai_ = '9'
-	# for root,dirs,files in os.walk("sucai/"+sucai_+'/'):
-	# 	for the_name in files:
-	# 		img = Image.open('sucai/'+sucai_+'/'+the_name)
-	# 		the_obj = SVMImage(img)
-	# 		str_date = the_obj.getStrDate()
-	# 		the_obj.svmDateSave(str_date)
-
-
-
-
-
-
-
-
-
-
-			# y,x = svm_read_problem(the_obj.file_model)
-			# yt,xt = svm_read_problem(the_obj.file_test)
-			# model = svm_train(y,x)
-			# print('test:')
-			# p_label, p_acc, p_val = svm_predict(yt, xt, model)
-			# print(p_label)
-
-
-	# y, x = [1,-1], [{1:1,2:1}, {1:-1,2:-1}]
-	# prob  = svm_problem(y, x)
-	# model = svm_train(prob)
-	# yt = [1]
-	# xt = [{1:1, 2:1}]
-	# p_label, p_acc, p_val = svm_predict(yt, xt, model)
-	# print(p_acc)
+	def put_in_sucai():#模板临时文件夹 存入 训练数据 到 素材文件夹
+		for i in range(0,10):
+			# file_ = chr(i)
+			file_ = str(i)
+			the_path = "move_put/"+file_+"/"
+			# the_path = "sucai/"+file_+"/"
+			for root,dirs,files in os.walk(the_path):
+				for the_name in files:
+					img = Image.open(the_path+the_name)
+					the_obj = SVMImage(img)
+					str_date = the_obj.getStrDate(label=i)
+					the_obj.svmDateSave(str_date)
+					shutil.move(the_path+the_name,"sucai/"+file_+"/")
+	# put_in_sucai()
